@@ -3,8 +3,5 @@ gMain
 gKeyRepeatContinueDelay
 gSoftResetDisabled
 gIntrTable
-sVcountAfterSound
 IntrMain_Buffer
-sVcountAtIntr
-sVcountBeforeSound
 gPcmDmaCounter

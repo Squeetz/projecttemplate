@@ -2,6 +2,7 @@
 #include "gflib.h"
 #include "gba/flash_internal.h"
 #include "load_save.h"
+#include "main.h"
 #include "random.h"
 
 #define SAVEBLOCK_MOVE_RANGE    128

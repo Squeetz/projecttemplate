@@ -3,11 +3,10 @@
 
 #include "gba/gba.h"
 #include <string.h>
+#include "main.h"
 #include "constants/global.h"
 #include "constants/flags.h"
 #include "constants/vars.h"
-#include "constants/species.h"
-#include "constants/easy_chat.h"
 
 // Prevent cross-jump optimization.
 #define BLOCK_CROSS_JUMP asm("");
@@ -168,13 +167,9 @@ struct Time
 };
 
 #include "constants/game_stat.h"
-#include "global.fieldmap.h"
 
 struct SaveBlock2
 {
-    /*0x000*/ u8 playerName[PLAYER_NAME_LENGTH + 1];
-    /*0x008*/ u8 playerGender; // MALE, FEMALE
-    /*0x00A*/ u8 playerTrainerId[TRAINER_ID_LENGTH];
     /*0x00E*/ u16 playTimeHours;
     /*0x010*/ u8 playTimeMinutes;
     /*0x011*/ u8 playTimeSeconds;

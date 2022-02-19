@@ -31,13 +31,13 @@ enum
 struct PaletteFadeControl // size = 0x10
 {
     /* 0x00 */ u32 multipurpose1;
-    /* 0x04 */ u16 blendcolor:15;
+    /* 0x04 */ u16 blendColor:15;
     /* 0x04 */ bool16 active:1;
     /* 0x06 */ u16 y; // blend coefficient
     /* 0x08 */ u16 denominator;
-    /* 0x0A */ u8 targetY:6 //target blend coefficient
+    /* 0x0A */ u8 targetY:6; //target blend coefficient
     /* 0x0A */ u8 mode:2;
-    /* 0x0B */ u8 deltaY:6 //rate of change of blend coefficient
+    /* 0x0B */ u8 deltaY:6; //rate of change of blend coefficient
     /* 0x0B */ bool8 yChanged:1;
     /* 0x0B */ bool8 yDec:1; // whether blend coefficient is decreasing
     /* 0x0C */ u8 delayCounter:6;

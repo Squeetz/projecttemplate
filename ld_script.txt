@@ -64,6 +64,7 @@ SECTIONS {
         src/palette.o(.text);
         src/sound.o(.text);
         src/task.o(.text);
+	src/scanline_effect.o(.text);
         src/image_processing_effects.o(.text);
         src/math_util.o(.text);
         src/save.o(.text);
@@ -90,6 +91,8 @@ SECTIONS {
         src/agb_flash_1m.o(.text);
         src/agb_flash_mx.o(.text);
         src/agb_flash_le.o(.text);
+	src/librfu_stwi.o(.text);
+	src/librfu_intr.o(.text);
         src/libagbsyscall.o(.text);
 	
         *libgcc.a:_call_via_rX.o(.text);

@@ -7,5 +7,6 @@
 	.include "src/load_save.o"
 	.include "src/palette.o"
 	.include "src/sound.o"
+	.include "src/scanline_effect.o"
 	.include "src/save.o"
 	.include "src/intro.o"

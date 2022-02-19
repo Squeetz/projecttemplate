@@ -3,14 +3,14 @@
 #include "trig.h"
 #include "scanline_effect.h"
 
-extern u16 gBattle_BG0_X;
-extern u16 gBattle_BG0_Y;
-extern u16 gBattle_BG1_X;
-extern u16 gBattle_BG1_Y;
-extern u16 gBattle_BG2_X;
-extern u16 gBattle_BG2_Y;
-extern u16 gBattle_BG3_X;
-extern u16 gBattle_BG3_Y;
+EWRAM_DATA u16 gBG0_X = 0;
+EWRAM_DATA u16 gBG0_Y = 0;
+EWRAM_DATA u16 gBG1_X = 0;
+EWRAM_DATA u16 gBG1_Y = 0;
+EWRAM_DATA u16 gBG2_X = 0;
+EWRAM_DATA u16 gBG2_Y = 0;
+EWRAM_DATA u16 gBG3_X = 0;
+EWRAM_DATA u16 gBG3_Y = 0;
 
 static void CopyValue16Bit(void);
 static void CopyValue32Bit(void);
@@ -148,28 +148,28 @@ static void TaskFunc_UpdateWavePerFrame(u8 taskId)
             switch (gTasks[taskId].tRegOffset)
             {
             case SCANLINE_EFFECT_REG_BG0HOFS:
-                value = gBattle_BG0_X;
+                value = gBG0_X;
                 break;
             case SCANLINE_EFFECT_REG_BG0VOFS:
-                value = gBattle_BG0_Y;
+                value = gBG0_Y;
                 break;
             case SCANLINE_EFFECT_REG_BG1HOFS:
-                value = gBattle_BG1_X;
+                value = gBG1_X;
                 break;
             case SCANLINE_EFFECT_REG_BG1VOFS:
-                value = gBattle_BG1_Y;
+                value = gBG1_Y;
                 break;
             case SCANLINE_EFFECT_REG_BG2HOFS:
-                value = gBattle_BG2_X;
+                value = gBG2_X;
                 break;
             case SCANLINE_EFFECT_REG_BG2VOFS:
-                value = gBattle_BG2_Y;
+                value = gBG2_Y;
                 break;
             case SCANLINE_EFFECT_REG_BG3HOFS:
-                value = gBattle_BG3_X;
+                value = gBG3_X;
                 break;
             case SCANLINE_EFFECT_REG_BG3VOFS:
-                value = gBattle_BG3_Y;
+                value = gBG3_Y;
                 break;
             }
         }

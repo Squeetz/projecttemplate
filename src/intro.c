@@ -5,6 +5,7 @@
 #include "save.h"
 #include "decompress.h"
 #include "util.h"
+#include "main.h"
 #include "trig.h"
 #include "constants/songs.h"
 

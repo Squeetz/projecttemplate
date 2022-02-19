@@ -74,12 +74,6 @@ ASFLAGS := -mcpu=arm7tdmi --defsym $(GAME_VERSION)=1 --defsym REVISION=$(GAME_RE
 LDFLAGS = -Map ../../$(MAP)
 
 LIB := $(LIBPATH) -lc -lgcc
-ifneq ($(DEVKITARM),)
-ifeq ($(TOOLCHAIN),$(DEVKITARM))
-LIB += -lsysbase -lc
-endif
-LIB += -lnosys
-endif
 
 SHA1 := $(shell { command -v sha1sum || command -v shasum; } 2>/dev/null) -c
 GFX := tools/gbagfx/gbagfx
@@ -178,7 +172,6 @@ tidy:
 
 include songs.mk
 
-%.s: ;
 %.png: ;
 %.pal: ;
 %.aif: ;
@@ -276,7 +269,7 @@ $(ELF): $(OBJ_DIR)/ld_script.ld $(OBJS)
 	$(FIX) $@ -t"$(TITLE)" -c$(GAME_CODE) -m$(MAKER_CODE) -r$(GAME_REVISION) --silent
 
 $(ROM): $(ELF)
-	$(OBJCOPY) -O binary --gap-fill 0xFF --pad-to 0x9000000 $< $@
+	$(OBJCOPY) -O binary --gap-fill 0xFF --pad-to 0x8800000 $< $@
 
 ###################
 ### Symbol file ###

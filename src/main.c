@@ -1,5 +1,6 @@
 #include "global.h"
 #include "gflib.h"
+#include "librfu.h"
 #include "load_save.h"
 #include "m4a.h"
 #include "random.h"
@@ -14,6 +15,7 @@ static void VBlankIntr(void);
 static void HBlankIntr(void);
 static void VCountIntr(void);
 static void SerialIntr(void);
+static void Timer3Intr(void);
 static void IntrDummy(void);
 
 const char BuildDateTime[] = "2004 04 26 11:20";
@@ -294,6 +296,11 @@ void SetVBlankCounter1Ptr(u32 *ptr)
 void DisableVBlankCounter1(void)
 {
     gMain.vblankCounter1 = NULL;
+}
+
+void Timer3Intr(void)
+{
+    
 }
 
 void DoSoftReset(void)

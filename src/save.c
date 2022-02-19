@@ -3,6 +3,7 @@
 #include "decompress.h"
 #include "load_save.h"
 #include "task.h"
+#include "main.h"
 #include "gba/flash_internal.h"
 
 #define FILE_SIGNATURE 0x08012025  // signature value to determine if a sector is in use
@@ -633,22 +634,13 @@ u8 HandleSavingData(u8 saveType)
     UpdateSaveAddresses();
     switch (saveType)
     {
-    case SAVE_HALL_OF_FAME: // hall of fame.
-        if (GetGameStat(GAME_STAT_ENTERED_HOF) < 999)
-            IncrementGameStat(GAME_STAT_ENTERED_HOF);
-        tempAddr = gDecompressionBuffer;
-        HandleWriteSectorNBytes(0x1C, tempAddr, 0xF80);
-        HandleWriteSectorNBytes(0x1D, tempAddr + 0xF80, 0xF80);
-        // fallthrough
     case SAVE_NORMAL: // normal save. also called by overwriting your own save.
     default:
-        SaveSerializedGame();
         save_write_to_flash(0xFFFF, gRamSaveSectionLocations);
         break;
     case SAVE_OVERWRITE_DIFFERENT_FILE:
         for (i = (0xE * 2 + 0); i < 32; i++)
             EraseFlashSector(i); // erase HOF.
-        SaveSerializedGame();
         save_write_to_flash(0xFFFF, gRamSaveSectionLocations);
         break;
     }
@@ -691,7 +683,6 @@ u8 Save_LoadGameData(u8 saveType)
     case SAVE_NORMAL:
     default:
         result = sub_80D9E14(0xFFFF, gRamSaveSectionLocations);
-        LoadSerializedGame();
         gSaveFileStatus = result;
         break;
     case SAVE_HALL_OF_FAME:

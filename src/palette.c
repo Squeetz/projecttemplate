@@ -3,6 +3,10 @@
 #include "util.h"
 #include "decompress.h"
 #include "task.h"
+#include "main.h"
+#include "palette.h"
+
+// Credit to luckytyphlosion for smoother palette fades.
 
 enum
 {
@@ -115,7 +119,7 @@ static void CopyPalBuffer1IntoPalBuffer2(u32 selectedPalettes, u16 *src, u16 *ds
 {
     int savedBufferTransferDisabled = gPaletteFade.bufferTransferDisabled;
     
-    ResetPaletteFadeControl();
+    ResetPaletteFade();
     
     gPaletteFade.bufferTransferDisabled = TRUE;
     
@@ -244,7 +248,6 @@ void ResetPaletteFade(void)
     gPaletteFade.bufferTransferDisabled = FALSE;
     gPaletteFade.shouldResetBlendRegisters = FALSE;
     gPaletteFade.hardwareFadeFinishing = FALSE;
-    gPaletteFade.softwareFadeFinishing = FALSE;
     gPaletteFade.softwareFadeFinishingCounter = 0;
     gPaletteFade.objPaletteToggle = 0;
     gPaletteFade.deltaY = 2;
@@ -252,14 +255,16 @@ void ResetPaletteFade(void)
 
 static u8 UpdateNormalPaletteFade(void)
 {
+    u16 targetY, yWholeValue;
+
     if (!gPaletteFade.active)
         return PALETTE_FADE_STATUS_DONE;
 	
     if (IsSoftwarePaletteFadeFinishing())
         return gPaletteFade.active ? PALETTE_FADE_STATUS_ACTIVE : PALETTE_FADE_STATUS_DONE;
 	
-    u16 targetY = gPaletteFade.targetY * gPaletteFade.denominator;
-    u16 yWholeValue = gPaletteFade.y / gPaletteFade.denominator;
+    targetY = gPaletteFade.targetY * gPaletteFade.denominator;
+    yWholeValue = gPaletteFade.y / gPaletteFade.denominator;
     
     if (gPaletteFade.yChanged)
         BlendPalettesFine(gPaletteFade_selectedPalettes, yWholeValue, gPaletteFade.blendColor);
@@ -520,7 +525,7 @@ static u8 UpdateFastPaletteFade(void)
             break;
         }
         gPaletteFade.mode = NORMAL_FADE;
-        gPaletteFade.softwareFadeFinishing = TRUE;
+        gPaletteFade.softwareFadeFinishingCounter = 1;
     }
 
     return PALETTE_FADE_STATUS_ACTIVE;
@@ -627,7 +632,7 @@ void BlendPalettes(u32 selectedPalettes, u8 coeff, u16 color)
 
 void BlendPalettesFine(u32 selectedPalettes, u32 coeff, u32 blendColor)
 {
-    s32, newR, newG, newB;
+    s32 newR, newG, newB;
     u16 *src;
     u16 *dst;
     
