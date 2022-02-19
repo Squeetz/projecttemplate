@@ -1,11 +1,9 @@
 gKeyRepeatStartDelay
-gLinkTransferringData
 gMain
 gKeyRepeatContinueDelay
 gSoftResetDisabled
 gIntrTable
 sVcountAfterSound
-gLinkVSyncDisabled
 IntrMain_Buffer
 sVcountAtIntr
 sVcountBeforeSound

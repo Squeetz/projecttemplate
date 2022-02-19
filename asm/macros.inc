@@ -1,19 +1,6 @@
 	.include "asm/macros/asm.inc"
 	.include "asm/macros/function.inc"
-	.include "asm/macros/movement.inc"
-	.include "asm/macros/pokemon_data.inc"
-	.include "asm/macros/ec.inc"
-	.include "asm/macros/map.inc"
 	.include "asm/macros/m4a.inc"
-	.include "asm/macros/trainer_tower.inc"
-
-	.macro region_map_location x, y, width, height, name
-	.byte \x
-	.byte \y
-	.byte \width
-	.byte \height
-	.4byte gMapName_\name
-	.endm
 
 	.macro obj_tiles address, uncompressed_size, tag
 	.4byte \address
@@ -56,13 +43,6 @@
 	.4byte \images
 	.4byte \affine_anims
 	.4byte \callback
-	.endm
-
-@ Berry trees have a table defining the palette slot used for each of their 5
-@ stages. However, the first 2 stages always use the same slots regardless of
-@ the type of tree and the slots of the last 3 stages always equal each other.
-	.macro berry_tree_palette_slot_table slot
-	.byte 3, 4, \slot, \slot, \slot
 	.endm
 
 	.macro subsprite x, y, priority, tile_num_offset, size
@@ -120,51 +100,7 @@
 	.fill 4 @ padding
 	.endm
 
-	.macro overworld_frame ptr:req, width:req, height:req, frame:req
-	.4byte (\ptr + (\width * \height * \frame * 64) / 2)
-	.2byte (\width * \height * 64) / 2
-	.2byte 0 @ padding
-	.endm
-
-	.macro credits_entry number, text
-	.4byte \number
-	.4byte \text
-	.endm
-
-	.macro door_anim_frame unknown, offset
-	.byte \unknown
-	.byte 0 @ padding
-	.2byte \offset
-	.endm
-
-	.macro door_anim_gfx metatile_num, unknown, tile_addr, palette_addr
-	.2byte \metatile_num
-	.2byte \unknown
-	.4byte \tile_addr
-	.4byte \palette_addr
-	.endm
-
-	.macro trainer_eye_trainer opp_1, opp_2, opp_3, opp_4, opp_5, map_name
-	.2byte OPPONENT_\opp_1
-	.2byte OPPONENT_\opp_2
-	.2byte OPPONENT_\opp_3
-	.2byte OPPONENT_\opp_4
-	.2byte OPPONENT_\opp_5
-	.2byte GROUP_\map_name
-	.2byte MAP_\map_name
-	.space 2
-	.endm
-
 	.macro window_template bg, top, left, height, width, palno, baseBlock
 	.byte \bg, \top, \left, \height, \width, \palno
 	.2byte \baseBlock
-	.endm
-
-	.macro abspath relative
-	.if REVISION == 0
-	.ascii "C:/WORK/POKeFRLG/src/pm_lgfr_ose/source/"
-	.else
-	.ascii "C:/WORK/POKeFRLG/Src/pm_lgfr_ose/source/"
-	.endif
-	.asciz "\relative"
 	.endm

@@ -21,7 +21,7 @@ void PlayTimeCounter_Reset(void)
 void PlayTimeCounter_Start(void)
 {
     sPlayTimeCounterState = RUNNING;
-    if (gSaveBlock2Ptr->playTimeHours > 999)
+    if (gSaveBlock2Ptr->playTimeHours > 9999)
         PlayTimeCounter_SetToMax();
 }
 
@@ -47,7 +47,7 @@ void PlayTimeCounter_Update(void)
                 {
                     gSaveBlock2Ptr->playTimeMinutes = 0;
                     gSaveBlock2Ptr->playTimeHours++;
-                    if (gSaveBlock2Ptr->playTimeHours > 999)
+                    if (gSaveBlock2Ptr->playTimeHours > 9999)
                         PlayTimeCounter_SetToMax();
                 }
             }
@@ -58,7 +58,7 @@ void PlayTimeCounter_Update(void)
 void PlayTimeCounter_SetToMax(void)
 {
     sPlayTimeCounterState = MAXED_OUT;
-    gSaveBlock2Ptr->playTimeHours = 999;
+    gSaveBlock2Ptr->playTimeHours = 9999;
     gSaveBlock2Ptr->playTimeMinutes = 59;
     gSaveBlock2Ptr->playTimeSeconds = 59;
     gSaveBlock2Ptr->playTimeVBlanks = 59;

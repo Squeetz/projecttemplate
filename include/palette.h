@@ -28,25 +28,27 @@ enum
     FAST_FADE_OUT_TO_BLACK,
 };
 
-struct PaletteFadeControl
+struct PaletteFadeControl // size = 0x10
 {
-    u32 multipurpose1;
-    u8 delayCounter:6;
-    u16 y:5; // blend coefficient
-    u16 targetY:5; // target blend coefficient
-    u16 blendColor:15;
-    u16 active:1;
-    u16 multipurpose2:6;
-    u16 yDec:1; // whether blend coefficient is decreasing
-    u16 bufferTransferDisabled:1;
-    u16 mode:2;
-    u16 shouldResetBlendRegisters:1;
-    u16 hardwareFadeFinishing:1;
-    u16 softwareFadeFinishingCounter:5;
-    u16 softwareFadeFinishing:1;
-    u16 objPaletteToggle:1;
-    u8 deltaY:4; // rate of change of blend coefficient
-    u32 unused;
+    /* 0x00 */ u32 multipurpose1;
+    /* 0x04 */ u16 blendcolor:15;
+    /* 0x04 */ bool16 active:1;
+    /* 0x06 */ u16 y; // blend coefficient
+    /* 0x08 */ u16 denominator;
+    /* 0x0A */ u8 targetY:6 //target blend coefficient
+    /* 0x0A */ u8 mode:2;
+    /* 0x0B */ u8 deltaY:6 //rate of change of blend coefficient
+    /* 0x0B */ bool8 yChanged:1;
+    /* 0x0B */ bool8 yDec:1; // whether blend coefficient is decreasing
+    /* 0x0C */ u8 delayCounter:6;
+    /* 0x0C */ bool8 hardwareFadeFinishing:1;
+    /* 0x0C */ bool8 doEndDelay:1;
+    /* 0x0D */ u8 multipurpose2:6;
+    /* 0x0D */ bool8 objPaletteToggle:1;
+    /* 0x0D */ bool8 shouldResetBlendRegisters:1;
+    /* 0x0E */ u8 softwareFadeFinishingCounter:3;
+    /* 0x0E */ bool8 bufferTransferDisabled:1;
+    /* 0x0F */ u8 unused;
 };
 
 extern struct PaletteFadeControl gPaletteFade;
@@ -61,8 +63,11 @@ void TransferPlttBuffer(void);
 u8 UpdatePaletteFade(void);
 void ResetPaletteFade(void);
 void ReadPlttIntoBuffers(void);
+void ResetPaletteFadedBuffer(u32 selectedPalettes);
+void CopyFadedIntoUnfadedBuffer(u32 selectedPalettes);
 bool8 BeginNormalPaletteFade(u32 selectedPalettes, s8 delay, u8 startY, u8 targetY, u16 blendColor);
-void ResetPaletteFadeControl(void);
+bool8 BeginNormalPaletteFadeForDuration(u32 selectedPalettes, u16 fadeDuration, u8 startY, u8 targetY, u16 blendColor, u32 doEndDelay);
+void BlendPalettesFine(u32 selectedPalettes, u32 coeff, u32 color);
 void InvertPlttBuffer(u32 selectedPalettes);
 void TintPlttBuffer(u32 selectedPalettes, s8 r, s8 g, s8 b);
 void UnfadePlttBuffer(u32 selectedPalettes);
@@ -74,11 +79,5 @@ void TintPalette_GrayScale(u16 *palette, u16 count);
 void TintPalette_GrayScale2(u16 *palette, u16 count);
 void TintPalette_SepiaTone(u16 *palette, u16 count);
 void TintPalette_CustomTone(u16 *palette, u16 count, u16 rTone, u16 gTone, u16 bTone);
-void sub_80716F8(const u16 *src, u16 *dst, u16 count, u8 a4);
-void sub_80717A8(u32 a1, s8 a2, u8 a3, u8 a4, u16 a5, u8 a6, u8 a7);
-bool32 sub_807185C(u8 var);
-void sub_8071898(void);
-void ResetPaletteStructByUid(u16 a1);
-void ResetPaletteStruct(u8 paletteNum);
 
 #endif // GUARD_PALETTE_H

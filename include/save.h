@@ -14,11 +14,8 @@
 enum
 {
     SAVE_NORMAL,
-    SAVE_LINK,
-    SAVE_EREADER,
     SAVE_HALL_OF_FAME,
     SAVE_OVERWRITE_DIFFERENT_FILE,
-    SAVE_HALL_OF_FAME_ERASE_BEFORE, // unused
 };
 
 struct SaveBlockChunk

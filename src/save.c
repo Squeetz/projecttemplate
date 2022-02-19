@@ -1,12 +1,8 @@
 #include "global.h"
 #include "save.h"
 #include "decompress.h"
-#include "overworld.h"
 #include "load_save.h"
 #include "task.h"
-#include "link.h"
-#include "save_failed_screen.h"
-#include "fieldmap.h"
 #include "gba/flash_internal.h"
 
 #define FILE_SIGNATURE 0x08012025  // signature value to determine if a sector is in use
@@ -54,16 +50,6 @@ const struct SaveSectionOffsets gSaveSectionOffsets[] =
     SAVEBLOCK_CHUNK(gSaveBlock1, 1),
     SAVEBLOCK_CHUNK(gSaveBlock1, 2),
     SAVEBLOCK_CHUNK(gSaveBlock1, 3),
-
-    SAVEBLOCK_CHUNK(gPokemonStorage, 0),
-    SAVEBLOCK_CHUNK(gPokemonStorage, 1),
-    SAVEBLOCK_CHUNK(gPokemonStorage, 2),
-    SAVEBLOCK_CHUNK(gPokemonStorage, 3),
-    SAVEBLOCK_CHUNK(gPokemonStorage, 4),
-    SAVEBLOCK_CHUNK(gPokemonStorage, 5),
-    SAVEBLOCK_CHUNK(gPokemonStorage, 6),
-    SAVEBLOCK_CHUNK(gPokemonStorage, 7),
-    SAVEBLOCK_CHUNK(gPokemonStorage, 8)
 };
 
 // Sector num to begin writing save data. Sectors are rotated each time the game is saved. (possibly to avoid wear on flash memory?)
@@ -76,7 +62,6 @@ struct SaveSection *gFastSaveSection; // the pointer is in fast IWRAM but may so
 u16 gUnknown_3005398;
 u16 gSaveUnusedVar;
 u16 gSaveFileStatus;
-void (*gGameContinueCallback)(void);
 struct SaveBlockChunk gRamSaveSectionLocations[0xE];
 u16 gSaveSucceeded;
 
@@ -629,14 +614,13 @@ void UpdateSaveAddresses(void)
         gRamSaveSectionLocations[i].data = (void*)(gSaveBlock1Ptr) + gSaveSectionOffsets[i].toAdd;
         gRamSaveSectionLocations[i].size = gSaveSectionOffsets[i].size;
     }
-
+/*
     for (i = 5; i < 14; i++)
     {
         gRamSaveSectionLocations[i].data = (void*)(gPokemonStoragePtr) + gSaveSectionOffsets[i].toAdd;
         gRamSaveSectionLocations[i].size = gSaveSectionOffsets[i].size;
-
-        i++;i--; // needed to match
     }
+*/
 }
 
 u8 HandleSavingData(u8 saveType)
@@ -649,10 +633,6 @@ u8 HandleSavingData(u8 saveType)
     UpdateSaveAddresses();
     switch (saveType)
     {
-    case SAVE_HALL_OF_FAME_ERASE_BEFORE: // deletes HOF before overwriting HOF completely. unused
-        for (i = 0xE * 2 + 0; i < 32; i++)
-            EraseFlashSector(i);
-        // fallthrough
     case SAVE_HALL_OF_FAME: // hall of fame.
         if (GetGameStat(GAME_STAT_ENTERED_HOF) < 999)
             IncrementGameStat(GAME_STAT_ENTERED_HOF);
@@ -664,15 +644,6 @@ u8 HandleSavingData(u8 saveType)
     default:
         SaveSerializedGame();
         save_write_to_flash(0xFFFF, gRamSaveSectionLocations);
-        break;
-    case SAVE_LINK: // _081532C4
-        SaveSerializedGame();
-        for(i = 0; i < 5; i++)
-            save_write_to_flash(i, gRamSaveSectionLocations);
-        break;
-    case SAVE_EREADER:
-        SaveSerializedGame();
-        save_write_to_flash(0, gRamSaveSectionLocations);
         break;
     case SAVE_OVERWRITE_DIFFERENT_FILE:
         for (i = (0xE * 2 + 0); i < 32; i++)
@@ -691,84 +662,17 @@ u8 TrySavingData(u8 saveType)
     {
         HandleSavingData(saveType);
         if(gDamagedSaveSectors)
-            DoSaveFailedScreen(saveType);
+	    goto fail;
+            //DoSaveFailedScreen(saveType);
         else
-            goto OK; // really?
+	{
+            gSaveSucceeded = 1;
+	    return 1;
+	}
     }
+fail:
     gSaveSucceeded = 0xFF;
     return 0xFF;
-
-OK:
-    gSaveSucceeded = 1;
-    return 1;
-}
-
-u8 SaveGame_AfterLinkTrade(void)
-{
-    if (gFlashMemoryPresent != TRUE)
-        return 1;
-    UpdateSaveAddresses();
-    SaveSerializedGame();
-    RestoreSaveBackupVarsAndIncrement(gRamSaveSectionLocations);
-    return 0;
-}
-
-bool8 AfterLinkTradeSaveFailed(void) 
-{
-    u8 retVal = sub_80D9AA4(0xE, gRamSaveSectionLocations);
-    if (gDamagedSaveSectors)
-        DoSaveFailedScreen(SAVE_NORMAL);
-    if (retVal == SAVE_STATUS_ERROR)
-        return 1;
-    else
-        return 0;
-}
-
-u8 ClearSaveAfterLinkTradeSaveFailure(void)
-{
-    sub_80D9B04(0xE, gRamSaveSectionLocations);
-    if (gDamagedSaveSectors)
-        DoSaveFailedScreen(SAVE_NORMAL);
-    return 0;
-}
-
-u8 sub_80DA434(void)
-{
-    sav12_xor_get(0xE, gRamSaveSectionLocations);
-    if (gDamagedSaveSectors)
-        DoSaveFailedScreen(SAVE_NORMAL);
-    return 0;
-}
-
-u8 sub_80DA45C(void)
-{
-    if (gFlashMemoryPresent != TRUE)
-        return 1;
-
-    UpdateSaveAddresses();
-    SaveSerializedGame();
-    RestoreSaveBackupVars(gRamSaveSectionLocations);
-    sub_80D9B04(gUnknown_3005398 + 1, gRamSaveSectionLocations);
-    return 0;
-}
-
-bool8 sub_80DA4A0(void)
-{
-    u8 retVal = FALSE;
-    u16 val = ++gUnknown_3005398;
-    if (val <= 4)
-    {
-        sub_80D9B04(gUnknown_3005398 + 1, gRamSaveSectionLocations);
-        sub_80D9D88(val, gRamSaveSectionLocations);
-    }
-    else
-    {
-        sub_80D9D88(val, gRamSaveSectionLocations);
-        retVal = TRUE;
-    }
-    if (gDamagedSaveSectors)
-        DoSaveFailedScreen(SAVE_LINK);
-    return retVal;
 }
 
 u8 Save_LoadGameData(u8 saveType)
@@ -789,7 +693,6 @@ u8 Save_LoadGameData(u8 saveType)
         result = sub_80D9E14(0xFFFF, gRamSaveSectionLocations);
         LoadSerializedGame();
         gSaveFileStatus = result;
-        gGameContinueCallback = 0;
         break;
     case SAVE_HALL_OF_FAME:
         result = sub_80DA120(SECTOR_HOF(0), gDecompressionBuffer, 0xF80);
@@ -843,75 +746,4 @@ u32 TryWriteSpecialSaveSection(u8 sector, u8* src)
     if (ProgramFlashSectorAndVerify(sector, savDataBuffer) != 0)
         return 0xFF;
     return 1;
-}
-
-void Task_LinkSave(u8 taskId)
-{
-    switch (gTasks[taskId].data[0])
-    {
-    case 0:
-        gSoftResetDisabled = TRUE;
-        gTasks[taskId].data[0] = 1;
-        break;
-    case 1:
-        SetLinkStandbyCallback();
-        gTasks[taskId].data[0] = 2;
-        break;
-    case 2:
-        if (IsLinkTaskFinished())
-        {
-            SaveMapView();
-            gTasks[taskId].data[0] = 3;
-        }
-        break;
-    case 3:
-        SetContinueGameWarpStatusToDynamicWarp();
-        SaveGame_AfterLinkTrade();
-        gTasks[taskId].data[0] = 4;
-        break;
-    case 4:
-        if (++gTasks[taskId].data[1] == 5)
-        {
-            gTasks[taskId].data[1] = 0;
-            gTasks[taskId].data[0] = 5;
-        }
-        break;
-    case 5:
-        if (AfterLinkTradeSaveFailed())
-            gTasks[taskId].data[0] = 6;
-        else
-            gTasks[taskId].data[0] = 4;
-        break;
-    case 6:
-        ClearSaveAfterLinkTradeSaveFailure();
-        gTasks[taskId].data[0] = 7;
-        break;
-    case 7:
-        ClearContinueGameWarpStatus2();
-        SetLinkStandbyCallback();
-        gTasks[taskId].data[0] = 8;
-        break;
-    case 8:
-        if (IsLinkTaskFinished())
-        {
-            sub_80DA434();
-            gTasks[taskId].data[0] = 9;
-        }
-        break;
-    case 9:
-        SetLinkStandbyCallback();
-        gTasks[taskId].data[0] = 10;
-        break;
-    case 10:
-        if (IsLinkTaskFinished())
-            gTasks[taskId].data[0]++;
-        break;
-    case 11:
-        if (++gTasks[taskId].data[1] > 5)
-        {
-            gSoftResetDisabled = FALSE;
-            DestroyTask(taskId);
-        }
-        break;
-    }
 }

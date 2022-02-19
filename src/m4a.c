@@ -8,12 +8,8 @@ extern const u8 gCgb3Vol[];
 BSS_CODE ALIGNED(4) char SoundMainRAM_Buffer[0x800] = {0};
 
 struct SoundInfo gSoundInfo;
-struct PokemonCrySong gPokemonCrySongs[MAX_POKEMON_CRIES];
-struct MusicPlayerInfo gPokemonCryMusicPlayers[MAX_POKEMON_CRIES];
 MPlayFunc gMPlayJumpTable[36];
 struct CgbChannel gCgbChans[4];
-struct MusicPlayerTrack gPokemonCryTracks[MAX_POKEMON_CRIES * 2];
-struct PokemonCrySong gPokemonCrySong;
 struct MusicPlayerInfo gMPlayInfo_BGM;
 struct MusicPlayerInfo gMPlayInfo_SE1;
 struct MusicPlayerInfo gMPlayInfo_SE2;
@@ -39,10 +35,6 @@ u32 MidiKeyToFreq(struct WaveData *wav, u8 key, u8 fineAdjust)
     val2 = gFreqTable[val2 & 0xF] >> (val2 >> 4);
 
     return umul3232H32(wav->freq, val1 + umul3232H32(val2 - val1, fineAdjustShifted));
-}
-
-void UnusedDummyFunc(void)
-{
 }
 
 void MPlayContinue(struct MusicPlayerInfo *mplayInfo)
@@ -86,16 +78,6 @@ void m4aSoundInit(void)
         MPlayOpen(mplayInfo, gMPlayTable[i].track, gMPlayTable[i].unk_8);
         mplayInfo->unk_B = gMPlayTable[i].unk_A;
         mplayInfo->memAccArea = gMPlayMemAccArea;
-    }
-
-    memcpy(&gPokemonCrySong, &gPokemonCrySongTemplate, sizeof(struct PokemonCrySong));
-
-    for (i = 0; i < MAX_POKEMON_CRIES; i++)
-    {
-        struct MusicPlayerInfo *mplayInfo = &gPokemonCryMusicPlayers[i];
-        struct MusicPlayerTrack *track = &gPokemonCryTracks[i * 2];
-        MPlayOpen(mplayInfo, track, 2);
-        track->chan = 0;
     }
 }
 
@@ -178,9 +160,6 @@ void m4aMPlayAllStop(void)
 
     for (i = 0; i < NUM_MUSIC_PLAYERS; i++)
         m4aMPlayStop(gMPlayTable[i].info);
-
-    for (i = 0; i < MAX_POKEMON_CRIES; i++)
-        m4aMPlayStop(&gPokemonCryMusicPlayers[i]);
 }
 
 void m4aMPlayContinue(struct MusicPlayerInfo *mplayInfo)
@@ -194,9 +173,6 @@ void m4aMPlayAllContinue(void)
 
     for (i = 0; i < NUM_MUSIC_PLAYERS; i++)
         MPlayContinue(gMPlayTable[i].info);
-
-    for (i = 0; i < MAX_POKEMON_CRIES; i++)
-        MPlayContinue(&gPokemonCryMusicPlayers[i]);
 }
 
 void m4aMPlayFadeOut(struct MusicPlayerInfo *mplayInfo, u16 speed)
@@ -1594,13 +1570,9 @@ void ply_xswee(struct MusicPlayerInfo *mplayInfo, struct MusicPlayerTrack *track
 
 void ply_xcmd_0C(struct MusicPlayerInfo *mplayInfo, struct MusicPlayerTrack *track)
 {
-    u32 unk;
+    u32 unk = 0;
 
-#ifdef UBFIX
-    unk = 0;
-#endif
-
-    READ_XCMD_BYTE(unk, 0) // UB: uninitialized variable
+    READ_XCMD_BYTE(unk, 0)
     READ_XCMD_BYTE(unk, 1)
 
     if (track->unk_3A < (u16)unk)
@@ -1618,13 +1590,9 @@ void ply_xcmd_0C(struct MusicPlayerInfo *mplayInfo, struct MusicPlayerTrack *tra
 
 void ply_xcmd_0D(struct MusicPlayerInfo *mplayInfo, struct MusicPlayerTrack *track)
 {
-    u32 unk;
+    u32 unk = 0;
 
-#ifdef UBFIX
-    unk = 0;
-#endif
-
-    READ_XCMD_BYTE(unk, 0) // UB: uninitialized variable
+    READ_XCMD_BYTE(unk, 0)
     READ_XCMD_BYTE(unk, 1)
     READ_XCMD_BYTE(unk, 2)
     READ_XCMD_BYTE(unk, 3)
@@ -1635,127 +1603,4 @@ void ply_xcmd_0D(struct MusicPlayerInfo *mplayInfo, struct MusicPlayerTrack *tra
 
 void DummyFunc(void)
 {
-}
-
-struct MusicPlayerInfo *SetPokemonCryTone(struct ToneData *tone)
-{
-    u32 maxClock = 0;
-    s32 maxClockIndex = 0;
-    s32 i;
-    struct MusicPlayerInfo *mplayInfo;
-
-    for (i = 0; i < MAX_POKEMON_CRIES; i++)
-    {
-        struct MusicPlayerTrack *track = &gPokemonCryTracks[i * 2];
-
-        if (!track->flags && (!track->chan || track->chan->track != track))
-            goto start_song;
-
-        if (maxClock < gPokemonCryMusicPlayers[i].clock)
-        {
-            maxClock = gPokemonCryMusicPlayers[i].clock;
-            maxClockIndex = i;
-        }
-    }
-
-    i = maxClockIndex;
-
-start_song:
-    mplayInfo = &gPokemonCryMusicPlayers[i];
-    mplayInfo->ident++;
-
-    gPokemonCrySongs[i] = gPokemonCrySong;
-
-    gPokemonCrySongs[i].tone = tone;
-    gPokemonCrySongs[i].part[0] = &gPokemonCrySongs[i].part0;
-    gPokemonCrySongs[i].part[1] = &gPokemonCrySongs[i].part1;
-    gPokemonCrySongs[i].gotoTarget = (u32)&gPokemonCrySongs[i].cont;
-
-    mplayInfo->ident = ID_NUMBER;
-
-    MPlayStart(mplayInfo, (struct SongHeader *)(&gPokemonCrySongs[i]));
-
-    return mplayInfo;
-}
-
-void SetPokemonCryVolume(u8 val)
-{
-    gPokemonCrySong.volumeValue = val & 0x7F;
-}
-
-void SetPokemonCryPanpot(s8 val)
-{
-    gPokemonCrySong.panValue = (val + C_V) & 0x7F;
-}
-
-void SetPokemonCryPitch(s16 val)
-{
-    s16 b = val + 0x80;
-    u8 a = gPokemonCrySong.tuneValue2 - gPokemonCrySong.tuneValue;
-    gPokemonCrySong.tieKeyValue = (b >> 8) & 0x7F;
-    gPokemonCrySong.tuneValue = (b >> 1) & 0x7F;
-    gPokemonCrySong.tuneValue2 = (a + ((b >> 1) & 0x7F)) & 0x7F;
-}
-
-void SetPokemonCryLength(u16 val)
-{
-    gPokemonCrySong.unkCmd0CParam = val;
-}
-
-void SetPokemonCryRelease(u8 val)
-{
-    gPokemonCrySong.releaseValue = val;
-}
-
-void SetPokemonCryProgress(u32 val)
-{
-    gPokemonCrySong.unkCmd0DParam = val;
-}
-
-bool32 IsPokemonCryPlaying(struct MusicPlayerInfo *mplayInfo)
-{
-    struct MusicPlayerTrack *track = mplayInfo->tracks;
-
-    if (track->chan && track->chan->track == track)
-        return TRUE;
-    else
-        return FALSE;
-}
-
-void SetPokemonCryChorus(s8 val)
-{
-    if (val)
-    {
-        gPokemonCrySong.trackCount = 2;
-        gPokemonCrySong.tuneValue2 = (val + gPokemonCrySong.tuneValue) & 0x7F;
-    }
-    else
-    {
-        gPokemonCrySong.trackCount = 1;
-    }
-}
-
-void SetPokemonCryStereo(u32 val)
-{
-    struct SoundInfo *soundInfo = SOUND_INFO_PTR;
-
-    if (val)
-    {
-        REG_SOUNDCNT_H = SOUND_B_TIMER_0 | SOUND_B_LEFT_OUTPUT
-                       | SOUND_A_TIMER_0 | SOUND_A_RIGHT_OUTPUT
-                       | SOUND_ALL_MIX_FULL;
-        soundInfo->mode &= ~1;
-    }
-    else
-    {
-        REG_SOUNDCNT_H = SOUND_B_TIMER_0 | SOUND_B_LEFT_OUTPUT | SOUND_B_RIGHT_OUTPUT
-                       | SOUND_A_TIMER_0 | SOUND_A_LEFT_OUTPUT | SOUND_A_RIGHT_OUTPUT
-                       | SOUND_B_MIX_HALF | SOUND_A_MIX_HALF | SOUND_CGB_MIX_FULL;
-        soundInfo->mode |= 1;
-    }
-}
-
-void SetPokemonCryPriority(u8 val)
-{
-    gPokemonCrySong.priority = val;
 }

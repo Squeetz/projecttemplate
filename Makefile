@@ -1,5 +1,4 @@
 TOOLCHAIN := $(DEVKITARM)
-COMPARE ?= 0
 
 ifeq ($(CC),)
 HOSTCC := gcc
@@ -32,28 +31,25 @@ else
 EXE :=
 endif
 
-include config.mk
+GAME_VERSION   := FIRERED
+TITLE          := POKEMON FIRE
+GAME_CODE      := BPR
+BUILD_NAME     := template
+MAKER_CODE     := 01
+GAME_REVISION  := 0
+GAME_LANGUAGE  := ENGLISH
 
 GCC_VER = $(shell $(CC) -dumpversion)
 
-ifeq ($(MODERN),0)
 CC1             := tools/agbcc/bin/agbcc$(EXE)
 override CFLAGS += -mthumb-interwork -Wimplicit -Wparentheses -Werror -O2 -fhex-asm
 LIBPATH := -L ../../tools/agbcc/lib
-else
-CC1             := $(shell $(CC) --print-prog-name=cc1) -quiet
-override CFLAGS += -mthumb -mthumb-interwork -O2 -mcpu=arm7tdmi -mabi=apcs-gnu -fno-toplevel-reorder -fno-aggressive-loop-optimizations -Wno-pointer-to-int-cast
-LIBPATH := -L $(shell dirname $(shell $(CC) --print-file-name=libgcc.a)) -L $(shell dirname $(shell $(CC) --print-file-name=libc.a))
-endif
 
-CPPFLAGS := -iquote include -D$(GAME_VERSION) -DREVISION=$(GAME_REVISION) -D$(GAME_LANGUAGE) -DMODERN=$(MODERN)
-ifeq ($(MODERN),0)
-CPPFLAGS += -I tools/agbcc -I tools/agbcc/include -nostdinc -undef
-endif
+CPPFLAGS := -iquote include -I tools/agbcc -I tools/agbcc/include -nostdinc -undef
 
 SHELL := /bin/bash -o pipefail
 
-ROM := poke$(BUILD_NAME).gba
+ROM := $(BUILD_NAME).gba
 OBJ_DIR := build/$(BUILD_NAME)
 
 ELF = $(ROM:.gba=.elf)
@@ -73,16 +69,14 @@ DATA_ASM_BUILDDIR = $(OBJ_DIR)/$(DATA_ASM_SUBDIR)
 SONG_BUILDDIR = $(OBJ_DIR)/$(SONG_SUBDIR)
 MID_BUILDDIR = $(OBJ_DIR)/$(MID_SUBDIR)
 
-ASFLAGS := -mcpu=arm7tdmi --defsym $(GAME_VERSION)=1 --defsym REVISION=$(GAME_REVISION) --defsym $(GAME_LANGUAGE)=1 --defsym MODERN=$(MODERN)
+ASFLAGS := -mcpu=arm7tdmi --defsym $(GAME_VERSION)=1 --defsym REVISION=$(GAME_REVISION) --defsym $(GAME_LANGUAGE)=1
 
 LDFLAGS = -Map ../../$(MAP)
 
 LIB := $(LIBPATH) -lc -lgcc
-ifneq ($(MODERN),0)
 ifneq ($(DEVKITARM),)
 ifeq ($(TOOLCHAIN),$(DEVKITARM))
 LIB += -lsysbase -lc
-endif
 endif
 LIB += -lnosys
 endif
@@ -95,8 +89,6 @@ SCANINC := tools/scaninc/scaninc
 PREPROC := tools/preproc/preproc
 RAMSCRGEN := tools/ramscrgen/ramscrgen
 FIX := tools/gbafix/gbafix
-MAPJSON := tools/mapjson/mapjson
-JSONPROC := tools/jsonproc/jsonproc
 
 PERL := perl
 
@@ -116,7 +108,7 @@ infoshell = $(foreach line, $(shell $1 | sed "s/ /__SPACE__/g"), $(info $(subst 
 
 # Build tools when building the rom
 # Disable dependency scanning for clean/tidy/tools
-ifeq (,$(filter-out all compare syms modern,$(MAKECMDGOALS)))
+ifeq (,$(filter-out all syms,$(MAKECMDGOALS)))
 $(call infoshell, $(MAKE) tools)
 else
 NODEP := 1
@@ -151,9 +143,8 @@ TOOLBASE = $(TOOLDIRS:tools/%=%)
 TOOLS = $(foreach tool,$(TOOLBASE),tools/$(tool)/$(tool)$(EXE))
 
 ALL_BUILDS := firered firered_rev1 leafgreen leafgreen_rev1
-ALL_BUILDS += $(ALL_BUILDS:%=%_modern)
 
-.PHONY: all rom tools clean-tools mostlyclean clean compare tidy syms $(TOOLDIRS) $(ALL_BUILDS) $(ALL_BUILDS:%=compare_%) modern
+.PHONY: all rom tools clean-tools mostlyclean clean tidy syms $(TOOLDIRS) $(ALL_BUILDS) $(ALL_BUILDS:%=compare_%)
 
 MAKEFLAGS += --no-print-directory
 
@@ -164,26 +155,16 @@ all: tools rom
 syms: $(SYM)
 
 rom: $(ROM)
-ifeq ($(COMPARE),1)
-	@$(SHA1) $(BUILD_NAME).sha1
-endif
 
 tools: $(TOOLDIRS)
 
 $(TOOLDIRS):
 	@$(MAKE) -C $@
 
-# For contributors to make sure a change didn't affect the contents of the ROM.
-compare:
-	@$(MAKE) COMPARE=1
-
 mostlyclean: tidy
 	$(RM) sound/direct_sound_samples/*.bin
 	$(RM) $(SONG_OBJS) $(MID_SUBDIR)/*.s
 	find . \( -iname '*.1bpp' -o -iname '*.4bpp' -o -iname '*.8bpp' -o -iname '*.gbapal' -o -iname '*.lz' -o -iname '*.latfont' -o -iname '*.hwjpnfont' -o -iname '*.fwjpnfont' \) -exec rm {} +
-	$(RM) $(DATA_ASM_SUBDIR)/layouts/layouts.inc $(DATA_ASM_SUBDIR)/layouts/layouts_table.inc
-	$(RM) $(DATA_ASM_SUBDIR)/maps/connections.inc $(DATA_ASM_SUBDIR)/maps/events.inc $(DATA_ASM_SUBDIR)/maps/groups.inc $(DATA_ASM_SUBDIR)/maps/headers.inc
-	find $(DATA_ASM_SUBDIR)/maps \( -iname 'connections.inc' -o -iname 'events.inc' -o -iname 'header.inc' \) -exec rm {} +
 	$(RM) $(AUTO_GEN_TARGETS)
 
 clean-tools:
@@ -195,11 +176,6 @@ tidy:
 	$(RM) $(ALL_BUILDS:%=poke%{.gba,.elf,.map})
 	$(RM) -r build
 
-include graphics_file_rules.mk
-include tileset_rules.mk
-include map_data_rules.mk
-include spritesheet_rules.mk
-include json_data_rules.mk
 include songs.mk
 
 %.s: ;
@@ -219,29 +195,11 @@ sound/%.bin: sound/%.aif ; $(AIF) $< $@
 sound/songs/%.s: sound/songs/%.mid
 	$(MID) $< $@
 
-ifeq ($(MODERN),0)
 $(C_BUILDDIR)/agb_flash.o: CFLAGS := -O -mthumb-interwork
 $(C_BUILDDIR)/agb_flash_1m.o: CFLAGS := -O -mthumb-interwork
 $(C_BUILDDIR)/agb_flash_mx.o: CFLAGS := -O -mthumb-interwork
 
 $(C_BUILDDIR)/m4a.o: CC1 := tools/agbcc/bin/old_agbcc$(EXE)
-
-$(C_BUILDDIR)/isagbprn.o: CC1 := tools/agbcc/bin/old_agbcc$(EXE)
-$(C_BUILDDIR)/isagbprn.o: CFLAGS := -mthumb-interwork
-
-$(C_BUILDDIR)/trainer_tower.o: CFLAGS += -ffreestanding
-$(C_BUILDDIR)/flying.o: CFLAGS += -ffreestanding
-
-$(C_BUILDDIR)/librfu_intr.o: CC1 := tools/agbcc/bin/agbcc_arm$(EXE)
-$(C_BUILDDIR)/librfu_intr.o: CFLAGS := -O2 -mthumb-interwork -quiet
-else
-$(C_BUILDDIR)/berry_crush_2.o: CFLAGS += -Wno-address-of-packed-member
-$(C_BUILDDIR)/berry_crush_3.o: CFLAGS += -Wno-address-of-packed-member
-$(C_BUILDDIR)/braille_text.o: CFLAGS += -Wno-address-of-packed-member
-$(C_BUILDDIR)/text.o: CFLAGS += -Wno-address-of-packed-member
-$(C_BUILDDIR)/battle_tower.o: CFLAGS += -Wno-div-by-zero
-$(C_BUILDDIR)/librfu_intr.o: override CFLAGS += -marm -mthumb-interwork -O2 -mtune=arm7tdmi -march=armv4t -mabi=apcs-gnu -fno-toplevel-reorder -fno-aggressive-loop-optimizations -Wno-pointer-to-int-cast
-endif
 
 ifeq ($(NODEP),1)
 $(C_BUILDDIR)/%.o: c_dep :=
@@ -308,13 +266,8 @@ $(OBJ_DIR)/sym_common.ld: sym_common.txt $(C_OBJS) $(wildcard common_syms/*.txt)
 $(OBJ_DIR)/sym_ewram.ld: sym_ewram.txt
 	$(RAMSCRGEN) ewram_data $< ENGLISH > $@
 
-ifeq ($(MODERN),0)
 LD_SCRIPT := ld_script.txt
 LD_SCRIPT_DEPS := $(OBJ_DIR)/sym_bss.ld $(OBJ_DIR)/sym_common.ld $(OBJ_DIR)/sym_ewram.ld
-else
-LD_SCRIPT := ld_script_modern.txt
-LD_SCRIPT_DEPS :=
-endif
 
 $(OBJ_DIR)/ld_script.ld: $(LD_SCRIPT) $(LD_SCRIPT_DEPS)
 	cd $(OBJ_DIR) && sed -f ../../ld_script.sed ../../$< | sed "s#tools/#../../tools/#g" > ld_script.ld
@@ -325,24 +278,6 @@ $(ELF): $(OBJ_DIR)/ld_script.ld $(OBJS)
 
 $(ROM): $(ELF)
 	$(OBJCOPY) -O binary --gap-fill 0xFF --pad-to 0x9000000 $< $@
-
-# "friendly" target names for convenience sake
-firered:                ; @$(MAKE) GAME_VERSION=FIRERED
-firered_rev1:           ; @$(MAKE) GAME_VERSION=FIRERED GAME_REVISION=1
-leafgreen:              ; @$(MAKE) GAME_VERSION=LEAFGREEN
-leafgreen_rev1:         ; @$(MAKE) GAME_VERSION=LEAFGREEN GAME_REVISION=1
-
-compare_firered:        ; @$(MAKE) GAME_VERSION=FIRERED COMPARE=1
-compare_firered_rev1:   ; @$(MAKE) GAME_VERSION=FIRERED GAME_REVISION=1 COMPARE=1
-compare_leafgreen:      ; @$(MAKE) GAME_VERSION=LEAFGREEN COMPARE=1
-compare_leafgreen_rev1: ; @$(MAKE) GAME_VERSION=LEAFGREEN GAME_REVISION=1 COMPARE=1
-
-firered_modern:        ; @$(MAKE) GAME_VERSION=FIRERED MODERN=1
-firered_rev1_modern:   ; @$(MAKE) GAME_VERSION=FIRERED GAME_REVISION=1 MODERN=1
-leafgreen_modern:      ; @$(MAKE) GAME_VERSION=LEAFGREEN MODERN=1
-leafgreen_rev1_modern: ; @$(MAKE) GAME_VERSION=LEAFGREEN GAME_REVISION=1 MODERN=1
-
-modern: ; @$(MAKE) MODERN=1
 
 ###################
 ### Symbol file ###
