@@ -1,5 +1,7 @@
 	.include "src/main.o"
 	.include "src/malloc.o"
+	.include "src/window.o"
+	.include "src/window_8bpp.o"
 	.include "src/sprite.o"
 	.space 8
 	.include "src/load_save.o"

@@ -94,7 +94,6 @@ void AgbMain()
         CallCallbacks();
 
         PlayTimeCounter_Update();
-        MapMusicMain();
         WaitForVBlank();
     }
 }
@@ -112,14 +111,11 @@ static void InitMainCallbacks(void)
 
 static void CallCallbacks(void)
 {
-    if (!RunSaveFailedScreen())
-    {
-        if (gMain.callback1)
-            gMain.callback1();
+    if (gMain.callback1)
+        gMain.callback1();
 
-        if (gMain.callback2)
-            gMain.callback2();
-    }
+    if (gMain.callback2)
+        gMain.callback2();
 }
 
 void SetMainCallback2(MainCallback callback)
@@ -279,7 +275,9 @@ void RestoreSerialTimer3IntrHandlers(void)
 }
 
 static void IntrDummy(void)
-{}
+{
+
+}
 
 static void WaitForVBlank(void)
 {
