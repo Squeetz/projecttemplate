@@ -1,7 +1,9 @@
 	.include "main.o"
 	.include "bg.o"
+	.include "text_printer.o"
 	.align 4
 	.include "window.o"
+	.include "text.o"
 	.include "sprite.o"
 	.align 4
 	.include "random.o"

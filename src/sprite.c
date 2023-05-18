@@ -89,6 +89,8 @@ typedef void (*AnimFunc)(struct Sprite *);
 typedef void (*AnimCmdFunc)(struct Sprite *);
 typedef void (*AffineAnimCmdFunc)(u8 matrixNum, struct Sprite *);
 
+#include "data/oamdata.h"
+
 #define DUMMY_OAM_DATA        \
 {                             \
     160, /* Y (off-screen) */ \

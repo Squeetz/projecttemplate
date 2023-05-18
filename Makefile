@@ -170,6 +170,7 @@ tidy:
 	$(RM) $(ALL_BUILDS:%=poke%{.gba,.elf,.map})
 	$(RM) -r build
 
+include graphics_file_rules.mk
 include songs.mk
 
 %.png: ;

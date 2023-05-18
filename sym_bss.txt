@@ -2,6 +2,7 @@
 	.include "src/dma3_manager.o"
 	.include "src/bg.o"
 	.include "src/malloc.o"
+	.include "src/text_printer.o"
 	.include "src/sprite.o"
 	.include "src/play_time.o"
 	.include "src/sound.o"

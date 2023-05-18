@@ -1,8 +1,11 @@
 	.include "src/main.o"
 	.include "src/malloc.o"
+	.include "src/text_printer.o"
+	.include "src/text.o"
 	.include "src/window.o"
 	.include "src/window_8bpp.o"
 	.include "src/sprite.o"
+	.include "src/string_util.o"
 	.space 8
 	.include "src/load_save.o"
 	.include "src/palette.o"
